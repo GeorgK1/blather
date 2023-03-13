@@ -133,10 +133,25 @@ async def remove(ctx, preset_name: str):
     except OSError:
         await ctx.send(f"Unable to remove {preset_name}")
 
+
 @bot.command()
 async def show(ctx):
     files = [entity for entity in os.listdir(PRESET_PATH) if entity.endswith('.txt')]
-    await ctx.send("".join(files))
+    await ctx.send("\n".join(files))
+
+
+@bot.command()
+async def inspect(ctx, preset_name : str):
+    lines = []
+    with open(f"{PRESET_PATH}/{preset_name}.txt") as f:
+        for line in f:
+            lines.append(line)
+    await ctx.send("\n".join(lines))
+
+@bt.error
+async def maximum_context_exceeded(ctx, error):
+    if isinstance(error, openai.InvalidRequestError):
+        await ctx.send("I am sorry, could not get the completion this time.")
 
 
 @switch.error
