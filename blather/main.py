@@ -1,0 +1,144 @@
+import os
+import discord
+import requests
+from dotenv import load_dotenv
+from discord.ext import commands
+import openai
+from enum import Enum
+
+load_dotenv()
+TOKEN = os.environ["TOKEN"]
+OPENAI_TOKEN = os.environ["OPENAI_TOKEN"]
+PRESET_PATH = './presets'
+ADMIN_ROLE = 'ad'
+
+
+class GPTRole(Enum):
+    SYSTEM = "system"
+    USER = "user"
+
+
+class GPTRule:
+    def __init__(self, role: str, content: str):
+        self.role = role
+        self.content = content
+
+    def __repr__(self):
+        return f"{self.role}, {self.content}"
+
+    def create_rule(self):
+        return {"role": self.role, "content": self.content}
+
+
+class GPTBot:
+    def __init__(self, preset_name, token):
+        self.preset_path = f"{PRESET_PATH}/{preset_name}.txt"
+        self.messages = []
+        openai.api_key = token
+
+    def read_system_config(self):
+        with open(self.preset_path) as f:
+            for line in f:
+                line = line.strip()
+                if len(line) > 2:
+                    self.add_rule(GPTRole.SYSTEM.value, line)
+
+    def add_rule(self, role: str, content: str):
+        rule = GPTRule(role, content)
+        self.messages.append(rule.create_rule())
+
+    def remove_rule(self):
+        self.messages.pop()
+
+    def generate_response(self, question: str):
+        self.add_rule(GPTRole.USER.value, question)
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=self.messages
+        )
+        completion = response['choices'][0]['message']['content']
+
+        self.remove_rule()
+
+        return completion
+
+
+class DiscordBot(commands.Bot):
+    def __init__(self, preset_path: str, command_prefix, intents):
+        super().__init__(command_prefix, intents=intents)
+        self.gptBot = GPTBot(preset_path, OPENAI_TOKEN)
+
+
+intents = discord.Intents.default()
+intents.message_content = True
+bot = DiscordBot("preset1", "./", intents)
+
+
+@bot.event
+async def on_ready():
+    print("I am alive")
+
+
+@bot.command()
+async def bt(ctx, *, question: str):
+    bot.gptBot.read_system_config()
+
+    completion = bot.gptBot.generate_response(question)
+    if completion:
+        await ctx.send(completion)
+    else:
+        await ctx.send("No completion done")
+
+
+@bot.command()
+@commands.has_role(ADMIN_ROLE)
+async def switch(ctx, preset_file: str):
+    bot.gptBot = GPTBot(preset_file, OPENAI_TOKEN)
+    await ctx.send("Preset changed to " + preset_file)
+
+
+@bot.command()
+@commands.has_role(ADMIN_ROLE)
+async def add(ctx, message_id):
+    message_with_attachment = await ctx.fetch_message(message_id)
+
+    try:
+        url = message_with_attachment.attachments[0].url
+
+        if url:
+            r = requests.get(url, allow_redirects=True)
+            file_name = r.headers['content-disposition'].split("filename=")[1]
+            file_name = file_name.replace("\"", "")
+
+            with open(f"{PRESET_PATH}/{file_name}", 'wb') as f:
+                f.write(r.content)
+
+            await ctx.send(f"{file_name} added successfully.")
+
+    except discord.errors.NotFound:
+        await ctx.send("Failed to fetch the file.")
+
+
+@bot.command()
+@commands.has_role(ADMIN_ROLE)
+async def remove(ctx, preset_name: str):
+    try:
+        os.remove(f"{PRESET_PATH}/{preset_name}.txt")
+        await ctx.send(f"{preset_name} successfully removed")
+
+        await switch(ctx, "preset1")
+
+    except OSError:
+        await ctx.send(f"Unable to remove {preset_name}")
+
+
+@switch.error
+@add.error
+@remove.error
+async def no_admin_role_error(ctx, error):
+    if isinstance(error, commands.MissingRole):
+        await ctx.send(f"Invalid permissions. Need {ADMIN_ROLE} role")
+
+
+bot.run(TOKEN)
