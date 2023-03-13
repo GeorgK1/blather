@@ -1,10 +1,11 @@
 import os
 import discord
 import requests
+import openai
+
+from enum import Enum
 from dotenv import load_dotenv
 from discord.ext import commands
-import openai
-from enum import Enum
 
 load_dotenv()
 TOKEN = os.environ["TOKEN"]
@@ -131,6 +132,11 @@ async def remove(ctx, preset_name: str):
 
     except OSError:
         await ctx.send(f"Unable to remove {preset_name}")
+
+@bot.command()
+async def show(ctx):
+    files = [entity for entity in os.listdir(PRESET_PATH) if entity.endswith('.txt')]
+    await ctx.send("".join(files))
 
 
 @switch.error
