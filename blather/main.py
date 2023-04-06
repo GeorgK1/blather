@@ -51,23 +51,24 @@ class GPTBot:
     def remove_rule(self):
         self.messages.pop()
 
+    def get_completion(self):
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=self.messages
+        )
+        completion = response['choices'][0]['message']['content']
+
+        self.remove_rule()
+
+        return completion
     def generate_response(self, question: str):
         self.add_rule(GPTRole.USER.value, question)
 
         try:
-            response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=self.messages
-            )
-            completion = response['choices'][0]['message']['content']
-
-            self.remove_rule()
-
-            return completion
+            return self.get_completion()
         except Exception as e:
-            print(e)
+            return self.get_completion()
             return "Something went wrong"
-
 
 
 class DiscordBot(commands.Bot):
