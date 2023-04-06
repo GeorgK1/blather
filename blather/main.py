@@ -64,7 +64,8 @@ class GPTBot:
             self.remove_rule()
 
             return completion
-        except:
+        except Exception as e:
+            print(e)
             return "Something went wrong"
 
 
