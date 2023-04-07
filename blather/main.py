@@ -74,13 +74,9 @@ class DiscordBot(commands.Bot):
         self.gptBot = GPTBot(preset_path, OPENAI_TOKEN)
 
 
-def get_prefix(bot, message):
-    return commands.when_mentioned_or("./")(bot, message)
-
-
 intents = discord.Intents.default()
 intents.message_content = True
-bot = DiscordBot("preset1", get_prefix, intents)
+bot = DiscordBot("preset1", "./", intents)
 
 
 @bot.event
@@ -94,7 +90,7 @@ async def on_message(message: discord.Message):
         if bot.user.mentioned_in(message):
             context = await bot.get_context(message)
             await bt(context=context, question=message.content)
-
+    await bot.process_commands(message)
 
 @bot.command()
 async def bt(ctx, question: str):
