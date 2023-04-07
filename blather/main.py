@@ -33,7 +33,8 @@ class GPTRule:
 
 class GPTBot:
     def __init__(self, preset_name, token):
-        self.preset_path = f"{PRESET_PATH}/{preset_name}"
+        self.preset_name = preset_name
+        self.preset_path = f"{PRESET_PATH}/{self.preset_name}"
         self.messages = []
         openai.api_key = token
 
@@ -103,7 +104,7 @@ async def bt(ctx, question: str):
     except openai.APIError:
         print("Completion failed")
         await ctx.send("No completion done")
-        bot.gptBot = GPTBot(bot.gptBot.preset_path, OPENAI_TOKEN)
+        bot.gptBot = GPTBot(bot.gptBot.preset_name, OPENAI_TOKEN)
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE)
