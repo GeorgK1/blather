@@ -101,8 +101,9 @@ async def bt(ctx, question: str):
         print("Completion successfully done.")
         await ctx.send(completion)
     except openai.APIError:
+        print("Completion failed")
         await ctx.send("No completion done")
-
+        bot.gptBot = GPTBot(bot.gptBot.preset_path, OPENAI_TOKEN)
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE)
