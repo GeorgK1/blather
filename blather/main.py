@@ -51,14 +51,13 @@ class GPTBot:
     def remove_rule(self):
         self.messages.pop()
 
-
     def generate_response(self, question: str):
         self.add_rule(GPTRole.USER.value, question)
 
         try:
             response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=self.messages
+                model="gpt-3.5-turbo",
+                messages=self.messages
 
             )
             completion = response['choices'][0]['message']['content']
@@ -82,15 +81,15 @@ bot = DiscordBot("preset1", "./", intents)
 
 @bot.event
 async def on_ready():
-    bot.gptBot.read_system_config()
     print("I am alive")
 
 
 @bot.command()
 async def bt(ctx, *, question: str):
-
+    bot.gptBot.read_system_config()
     completion = bot.gptBot.generate_response(question)
     if completion:
+        print("Completion successfully done.")
         await ctx.send(completion)
     else:
         await ctx.send("No completion done")
