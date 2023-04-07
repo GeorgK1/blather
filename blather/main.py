@@ -33,12 +33,12 @@ class GPTRule:
 
 class GPTBot:
     def __init__(self, preset_name, token):
-        self.preset_path = f"{PRESET_PATH}/{preset_name}.txt"
+        self.preset_path = f"{PRESET_PATH}/{preset_name}"
         self.messages = []
         openai.api_key = token
 
     def read_system_config(self):
-        with open(self.preset_path) as f:
+        with open(f"{self.preset_path}.txt") as f:
             for line in f:
                 line = line.strip()
                 if len(line) > 2:
