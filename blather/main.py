@@ -51,24 +51,22 @@ class GPTBot:
     def remove_rule(self):
         self.messages.pop()
 
-    def get_completion(self):
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=self.messages
-        )
-        completion = response['choices'][0]['message']['content']
 
-        self.remove_rule()
-
-        return completion
     def generate_response(self, question: str):
         self.add_rule(GPTRole.USER.value, question)
 
         try:
-            return self.get_completion()
+            response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=self.messages
+
+            )
+            completion = response['choices'][0]['message']['content']
+
+            self.remove_rule()
+            return completion
         except Exception as e:
-            return self.get_completion()
-            return "Something went wrong"
+            return None
 
 
 class DiscordBot(commands.Bot):
@@ -84,12 +82,12 @@ bot = DiscordBot("preset1", "./", intents)
 
 @bot.event
 async def on_ready():
+    bot.gptBot.read_system_config()
     print("I am alive")
 
 
 @bot.command()
 async def bt(ctx, *, question: str):
-    bot.gptBot.read_system_config()
 
     completion = bot.gptBot.generate_response(question)
     if completion:
@@ -147,12 +145,13 @@ async def show(ctx):
 
 
 @bot.command()
-async def inspect(ctx, preset_name : str):
+async def inspect(ctx, preset_name: str):
     lines = []
     with open(f"{PRESET_PATH}/{preset_name}.txt") as f:
         for line in f:
             lines.append(line)
     await ctx.send("\n".join(lines))
+
 
 @bt.error
 async def maximum_context_exceeded(ctx, error):
