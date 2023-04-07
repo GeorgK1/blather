@@ -65,7 +65,7 @@ class GPTBot:
             self.remove_rule()
             return completion
         except Exception as e:
-            return None
+            raise openai.APIError
 
 
 class DiscordBot(commands.Bot):
@@ -84,14 +84,21 @@ async def on_ready():
     print("I am alive")
 
 
+@bot.event
+async def on_message(message: discord.Message):
+    if message.author != message.author.bot:
+        if bot.user.mentioned_in(message):
+            await bt(message, message.content)
+
+
 @bot.command()
 async def bt(ctx, *, question: str):
     bot.gptBot.read_system_config()
-    completion = bot.gptBot.generate_response(question)
-    if completion:
+    try:
+        completion = bot.gptBot.generate_response(question)
         print("Completion successfully done.")
         await ctx.send(completion)
-    else:
+    except openai.APIError:
         await ctx.send("No completion done")
 
 
