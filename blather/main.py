@@ -74,9 +74,13 @@ class DiscordBot(commands.Bot):
         self.gptBot = GPTBot(preset_path, OPENAI_TOKEN)
 
 
+def get_prefix(bot, message):
+    return commands.when_mentioned_or("./")(bot, message)
+
+
 intents = discord.Intents.default()
 intents.message_content = True
-bot = DiscordBot("preset1", "./", intents)
+bot = DiscordBot("preset1", get_prefix, intents)
 
 
 @bot.event
