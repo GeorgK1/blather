@@ -88,11 +88,11 @@ async def on_ready():
 async def on_message(message: discord.Message):
     if message.author != message.author.bot:
         if bot.user.mentioned_in(message):
-            await bt(context=message, question=message.content)
+            await bt(ctx=message, question=message.content)
 
 
 @bot.command()
-async def bt(ctx, *, question: str):
+async def bt(ctx, question: str):
     bot.gptBot.read_system_config()
     try:
         completion = bot.gptBot.generate_response(question)
