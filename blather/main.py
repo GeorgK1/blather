@@ -88,7 +88,7 @@ async def on_ready():
 async def on_message(message: discord.Message):
     if message.author != message.author.bot:
         if bot.user.mentioned_in(message):
-            await bt(question=message.content)
+            await bt(context=message, question=message.content)
 
 
 @bot.command()
