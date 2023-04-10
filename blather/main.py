@@ -19,6 +19,11 @@ class GPTRole(Enum):
     USER = "user"
 
 
+class GPTModel(Enum):
+    GPT3 = "gpt-3.5-turbo"
+    GPT4 = "gpt4"
+
+
 class GPTRule:
     def __init__(self, role: str, content: str):
         self.role = role
@@ -35,6 +40,7 @@ class GPTBot:
     def __init__(self, preset_name, token):
         self.preset_name = preset_name
         self.preset_path = f"{PRESET_PATH}/{self.preset_name}"
+        self.model = GPTModel.GPT3.value
         self.messages = []
         openai.api_key = token
 
@@ -57,7 +63,7 @@ class GPTBot:
 
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model=self.model,
                 messages=self.messages
 
             )
@@ -105,6 +111,7 @@ async def bt(ctx, question: str):
         print("Completion failed")
         await ctx.send("No completion done")
         bot.gptBot = GPTBot(bot.gptBot.preset_name, OPENAI_TOKEN)
+
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE)
@@ -162,6 +169,15 @@ async def inspect(ctx, preset_name: str):
             lines.append(line)
     await ctx.send("\n".join(lines))
 
+
+@bot.command()
+async def model(ctx, model_name: str):
+    if model_name == GPTModel.GPT3.value:
+        bot.gptBot.model = GPTModel.GPT3.value
+        await ctx.send("Changed model to GPT3")
+    elif model_name == GPTModel.GPT4.value:
+        bot.gptBot.model = GPTModel.GPT4.value
+        await ctx.send("Changed model to GPT4")
 
 @bt.error
 async def maximum_context_exceeded(ctx, error):
