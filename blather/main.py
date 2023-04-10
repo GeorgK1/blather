@@ -171,6 +171,7 @@ async def inspect(ctx, preset_name: str):
 
 
 @bot.command()
+@commands.has_role(ADMIN_ROLE)
 async def model(ctx, model_name: str):
     if model_name == GPTModel.GPT3.value:
         bot.gptBot.model = GPTModel.GPT3.value
